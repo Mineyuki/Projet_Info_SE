@@ -1,5 +1,5 @@
-#ifndef PROJET_INFO_SE_PROCESSUS_H
-#define PROJET_INFO_SE_PROCESSUS_H
+#ifndef PROCESSUS_H
+#define PROCESSUS_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,7 +19,8 @@
 /*
  * Les passagers sont representes par une structure contenant les infomations suivantes
  */
-typedef struct{
+typedef struct
+{
     uint32_t identification_number; // Numero d'identification unique
     uint8_t station_start; // Station de depart
     uint8_t station_end; // Station d'arrivee
