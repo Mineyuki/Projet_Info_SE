@@ -7,6 +7,7 @@
 #include <stdbool.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 
 #define MAX_STATION_BUS 5 // Nombre de station maximal de bus
 #define MAX_STATION_SUBWAY 3 // Nombre de station maximal de metro
