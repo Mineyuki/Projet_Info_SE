@@ -28,6 +28,6 @@ passenger* read_passenger(FILE *file)
 
 int main(int argc, char* argv[])
 {
-    EXEMEPLE
+    printf("Pull request\n");
     return EXIT_SUCCESS;
 }
