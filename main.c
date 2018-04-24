@@ -28,5 +28,6 @@ passenger* read_passenger(FILE *file)
 
 int main(int argc, char* argv[])
 {
+    EXEMEPLE
     return EXIT_SUCCESS;
 }
