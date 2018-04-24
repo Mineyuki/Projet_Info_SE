@@ -3,7 +3,7 @@
 /*
  * Allouer un maillon
  */
-chain *new_chain(passenger passenger1)
+chain *new_chain(passenger *passenger1)
 {
     chain *chain1 = malloc(sizeof(chain)); // Alloue la taille d'un maillon
     if(chain1 == NULL)
@@ -44,7 +44,7 @@ _Bool is_empty(queue *queue1)
  * Ajout d'elements dans la file
  * On ajoute forcement en queue de file
  */
-void push(queue *queue1, passenger passenger1)
+void push(queue *queue1, passenger *passenger1)
 {
     chain *chain1 = new_chain(passenger1); // Cree un nouveau maillon
     chain1->next = NULL; // Prochain maillon est a null
@@ -65,10 +65,10 @@ void push(queue *queue1, passenger passenger1)
  * Suppression d'elements dans la file
  * On retire forcement les elements en tete de file
  */
-passenger pop(queue *queue1)
+passenger *pop(queue *queue1)
 {
     chain *chain1 = queue1->head; // Recupere la tete du maillon
-    passenger passenger1 = chain1->data; // Recupere le passager
+    passenger *passenger1 = chain1->data; // Recupere le passager
 
     queue1->head = queue1->head->next; // La tete de la file devient la tete de la file suivante
     free(chain1); // Libere la memoire du maillon
@@ -106,10 +106,10 @@ chain *find_chain(queue *queue1, uint64_t position)
 /*
  * Supprimer une donnee a une position particuliere
  */
-passenger remove_position(queue *queue1, uint64_t position)
+passenger *remove_position(queue *queue1, uint64_t position)
 {
     chain *chain1, *chain_remove;
-    passenger passenger1;
+    passenger *passenger1;
 
     if(position >= queue1->size)
     { // Erreur : on demande a supprimer dans une position en dehors de la file
