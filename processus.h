@@ -25,9 +25,10 @@ typedef struct
     uint8_t station_start; // Station de depart
     uint8_t station_end; // Station d'arrivee
     uint32_t wait_time_past; // Temps d'attente ecoule
-    bool transfert; // Transfert entre le circuit de metro et d'autobus est requis
+    uint8_t transfert; // Transfert entre le circuit de metro et d'autobus est requis
     uint32_t wait_time_maximum; // Temps d'attente maximal
 }passenger;
 
+passenger* read_passenger(FILE*); // Lit un passager dans le fichier passe en parametre et retourne ce passager
 
 #endif
