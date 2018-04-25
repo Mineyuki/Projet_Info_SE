@@ -136,3 +136,19 @@ passenger *remove_position(queue *queue1, uint64_t position)
         return passenger1; // Retourne le passager
     }
 }
+
+/*
+ * Supprime une file
+ */
+void delete_queue(queue *queue1)
+{
+    passenger *passenger1;
+
+    while(!is_empty(queue1))
+    { // Tant que la file n'est pas vide
+        passenger1 = pop(queue1); // Recupere la donnee en tete
+        free(passenger1); // Libere l'espace de la donnee
+    }
+
+    free(queue1);
+}

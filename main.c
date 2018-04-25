@@ -67,6 +67,15 @@ int main(int argc, char* argv[])
 
     fclose(file); // Fermeture du fichier
 
+    for(int index = 0; index < MAX_STATION; index++)
+    { // Supprimer des files FIFO
+        delete_queue(increment_table_passenger[index]);
+        if(index >= MAX_STATION_BUS)
+        { // Tableau de files d'attente pour le metro
+            delete_queue(decrement_table_passenger[index]);
+        }
+    }
+
     free(increment_table_passenger);
     free(decrement_table_passenger);
 
