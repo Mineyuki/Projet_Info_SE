@@ -8,7 +8,7 @@ chain *new_chain(passenger *passenger1)
     chain *chain1 = malloc(sizeof(chain)); // Alloue la taille d'un maillon
     if(chain1 == NULL)
     {
-        printf("Erreur queue.c : Impossible d'allouer un maillon.\n");
+        fprintf(stderr, "Erreur queue.c : Impossible d'allouer un maillon.\n");
         exit(EXIT_FAILURE);
     }
     chain1->data = passenger1; // Affecte a la donnee du maillon, un passager
@@ -23,7 +23,7 @@ queue *new_queue()
     queue *queue1 = malloc(sizeof(queue)); // Alloue la taille d'une file
     if(queue1 == NULL)
     {
-        printf("Erreur queue.c : Impossible d'allouer une file.\n");
+        fprintf(stderr, "Erreur queue.c : Impossible d'allouer une file.\n");
         exit(EXIT_FAILURE);
     }
     queue1->size = 0; // La taille est a 0
@@ -113,7 +113,7 @@ passenger *remove_position(queue *queue1, uint64_t position)
 
     if(position >= queue1->size)
     { // Erreur : on demande a supprimer dans une position en dehors de la file
-        printf("Erreur queue.c : Impossible de supprimer le passager a la position %lu.\n", position);
+        fprintf(stderr, "Erreur queue.c : Impossible de supprimer le passager a la position %lu.\n", position);
         exit(EXIT_FAILURE);
     }
     else if (position == 0)

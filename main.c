@@ -10,7 +10,7 @@ passenger *read_passenger(FILE *file)
     passenger* passenger1 = malloc(sizeof(passenger));
     if(passenger1 == NULL)
     {
-        printf("Function read_passenger : Impossible d'allouer un espace pour un passager.\n");
+        fprintf(stderr, "Function read_passenger : Impossible d'allouer un espace pour un passager.\n");
         exit(EXIT_FAILURE);
     }
 
@@ -31,7 +31,7 @@ int main(int argc, char* argv[])
     FILE *file = fopen(argv[1], "rt"); // On recupere le fichier passe en parametre
     if(file == NULL)
     {
-        printf("Erreur lors de l'ouverture du fichier.\n");
+        fprintf(stderr, "Erreur lors de l'ouverture du fichier.\n");
         exit(EXIT_FAILURE);
     }
 
@@ -81,3 +81,79 @@ int main(int argc, char* argv[])
 
     return EXIT_SUCCESS;
 }
+
+/*
+ * Passage structure dans un pipe nomme
+int main()
+{
+    int fd;
+    char *myfifo = "test.fifo";
+    passenger *passenger1 = malloc(sizeof(passenger));
+
+    passenger1->station_start = 1;
+    passenger1->station_end = 2;
+    passenger1->transfert = 0;
+    passenger1->wait_time_maximum = 15;
+    passenger1->wait_time_past = 10;
+    passenger1->identification_number = 10;
+
+
+
+    // Creation d'un tube nomme avec permission : READ, WRITE, EXECUTE/SEARCH by OWNER
+    if(mkfifo((myfifo), S_IRWXU) == -1)
+    {
+        fprintf(stderr, "Erreur lors de la creation du tube.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    if(fork())
+    {
+        if((fd = open(myfifo, O_WRONLY)) == -1)
+        {
+            fprintf(stderr, "Impossible d'ouvrir l'entree du tube nomme.\n");
+            exit(EXIT_FAILURE);
+        }
+
+        write(fd, &passenger1, sizeof(passenger));
+
+        printf("#%u %hhu %hhu %u %hhu %u\n",
+               passenger1->identification_number,
+               passenger1->station_start,
+               passenger1->station_end,
+               passenger1->wait_time_past,
+               passenger1->transfert,
+               passenger1->wait_time_maximum);
+
+        close(fd);
+
+    }
+    else
+    {
+        passenger *passenger2 = malloc(sizeof(passenger));
+        if((fd = open(myfifo, O_RDONLY)) == -1)
+        {
+            fprintf(stderr, "Impossible d'ouvrir l'entree du tube nomme.\n");
+            exit(EXIT_FAILURE);
+        }
+
+        read(fd, &passenger2, sizeof(int32_t));
+
+        printf("#%u %hhu %hhu %u %hhu %u\n",
+               passenger2->identification_number,
+               passenger2->station_start,
+               passenger2->station_end,
+               passenger2->wait_time_past,
+               passenger2->transfert,
+               passenger2->wait_time_maximum);
+
+        close(fd);
+        free(passenger2);
+
+    }
+
+    unlink(myfifo);
+
+    free(passenger1);
+
+    return EXIT_SUCCESS;
+}*/
