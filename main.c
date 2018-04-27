@@ -28,6 +28,12 @@ passenger *read_passenger(FILE *file)
 
 int main(int argc, char* argv[])
 {
+
+/*
+ ***********************************************************************************************************************
+ * Lecture et repartition des passagers dans les files d'attente des stations
+ ***********************************************************************************************************************
+ */
     FILE *file = fopen(argv[1], "rt"); // On recupere le fichier passe en parametre
     if(file == NULL)
     {
@@ -66,6 +72,42 @@ int main(int argc, char* argv[])
     }
 
     fclose(file); // Fermeture du fichier
+
+/*
+ ***********************************************************************************************************************
+ * Creation du tube de communication nomme
+ ***********************************************************************************************************************
+ */
+    int fd;
+    char *myfifo = "communication.fifo";
+
+    // Creation d'un tube nomme avec permission : READ, WRITE, EXECUTE/SEARCH by OWNER
+    if(mkfifo((myfifo), S_IRWXU) == -1)
+    {
+        fprintf(stderr, "Erreur lors de la creation du tube.\n");
+        exit(EXIT_FAILURE);
+    }
+
+/*
+ ***********************************************************************************************************************
+ * Creation du processus taxis
+ ***********************************************************************************************************************
+ */
+
+    if(fork())
+    {
+
+    }
+    else
+    {
+
+    }
+
+/*
+ ***********************************************************************************************************************
+ * Liberation de la memoire
+ ***********************************************************************************************************************
+ */
 
     for(int index = 0; index < MAX_STATION; index++)
     { // Supprimer des files FIFO
