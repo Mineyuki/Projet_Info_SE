@@ -29,17 +29,54 @@ passenger *read_passenger(FILE *file)
  * Fonction thread pour autobus
  */
 
-void * thread_autobus(void * arg)
+void * thread_autobus(queue * arg)
 {
-
+    uint32_t compteur_station = 0;
+    chain *chain1;
+    while(compteur_station < 6)
+    {
+        while(arg[compteur_station].head->next !=NULL)
+        {
+            chain1 = arg[compteur_station].head;
+            if ( arg[compteur_station].head->data->station_end == compteur_station)
+            {
+                printf("[Bus] debarque le passager %d", arg[compteur_station].head->data->identification_number);
+            }
+            arg[compteur_station].head = arg[compteur_station].head->next;
+        }
+        compteur_station = compteur_station + 1;
+    }
 }
 
 /*
  * Fonction thread pour metro
  */
 
-void * thread_metro(void * arg)
+void * thread_metro(queue * arg)
 {
+    uint32_t compteur_station = 5;
+    chain *chain1;
+
+    while(compteur_station > 5 && compteur_station <= 8)
+    {
+        if(compteur_station > 8)
+        {
+
+        }
+        while (arg[compteur_station].head->next != NULL)
+        {
+            chain1 = arg[compteur_station].head;
+            if(arg[compteur_station].head->data->station_end == compteur_station)
+            {
+                printf("[Metro] debarque le passager %d", arg[compteur_station].head->data->identification_number);
+            }
+            arg[compteur_station].head = arg[compteur_station].head->next;
+
+
+        }
+        compteur_station = compteur_station + 1;
+
+    }
 
 }
 
@@ -153,18 +190,18 @@ int main(int argc, char* argv[])
  */
     if( pthread_create(&thread1, NULL, thread_autobus, NULL ) == -1)
     {
-        fprintf(stderr, "Impossible de creer le thread");
+        fprintf(stderr, "Impossible de creer le thread bus");
         exit(EXIT_FAILURE);
 
     }
 
-    if(pthread_create(&thread2, NULL, thread_metro, NULL) == -1)
+    if(pthread_create(&thread2, NULL, thread_metro, increment_table_passenger)== -1)
     {
         fprintf(stderr, "Impossible de creer le thread metro");
         exit(EXIT_FAILURE);
     }
 
-    if ( pthread_create(&thread3, NULL, thread_verificateur, NULL) == -1)
+    if ( pthread_create(&thread3, NULL, thread_verificateur, increment_table_passenger) == -1)
     {
         fprintf(stderr, "Impossible de creer le thread verificateur");
         exit(EXIT_FAILURE);
