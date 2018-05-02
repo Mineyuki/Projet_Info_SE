@@ -34,6 +34,7 @@ int main(int argc, char* argv[])
  * Lecture et repartition des passagers dans les files d'attente des stations
  ***********************************************************************************************************************
  */
+    pid_t taxi;
     FILE *file = fopen(argv[1], "rt"); // On recupere le fichier passe en parametre
     if(file == NULL)
     {
@@ -94,7 +95,7 @@ int main(int argc, char* argv[])
  ***********************************************************************************************************************
  */
 
-    if(fork())
+    if((taxi = fork()) == 0)
     {
 
     }
@@ -120,6 +121,7 @@ int main(int argc, char* argv[])
 
     free(increment_table_passenger);
     free(decrement_table_passenger);
+
 
     return EXIT_SUCCESS;
 }
@@ -197,5 +199,7 @@ int main()
 
     free(passenger1);
 
+
     return EXIT_SUCCESS;
-}*/
+}
+ */
