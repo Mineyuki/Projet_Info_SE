@@ -25,6 +25,32 @@ passenger *read_passenger(FILE *file)
 
     return passenger1; // Renvoie le passager
 }
+/*
+ * Fonction thread pour autobus
+ */
+
+void * thread_autobus(void * arg)
+{
+
+}
+
+/*
+ * Fonction thread pour metro
+ */
+
+void * thread_metro(void * arg)
+{
+
+}
+
+/*
+ * Fonction pour le thread verificateur
+ */
+
+void * thread_verificateur(void * arg)
+{
+
+}
 
 int main(int argc, char* argv[])
 {
@@ -35,6 +61,10 @@ int main(int argc, char* argv[])
  ***********************************************************************************************************************
  */
     pid_t taxi;
+    pthread_t thread1;
+    pthread_t thread2;
+    pthread_t thread3;
+
     FILE *file = fopen(argv[1], "rt"); // On recupere le fichier passe en parametre
     if(file == NULL)
     {
@@ -115,6 +145,35 @@ int main(int argc, char* argv[])
 
         close(fd);
     }
+
+/*
+ * *********************************************************************************************************************
+ * Creation des threads
+ * *********************************************************************************************************************
+ */
+    if( pthread_create(&thread1, NULL, thread_autobus, NULL ) == -1)
+    {
+        fprintf(stderr, "Impossible de creer le thread");
+        exit(EXIT_FAILURE);
+
+    }
+
+    if(pthread_create(&thread2, NULL, thread_metro, NULL) == -1)
+    {
+        fprintf(stderr, "Impossible de creer le thread metro");
+        exit(EXIT_FAILURE);
+    }
+
+    if ( pthread_create(&thread3, NULL, thread_verificateur, NULL) == -1)
+    {
+        fprintf(stderr, "Impossible de creer le thread verificateur");
+        exit(EXIT_FAILURE);
+    }
+
+    pthread_join(thread1, NULL);
+    pthread_join(thread2, NULL);
+    pthread_join(thread3, NULL);
+
 
 /*
  ***********************************************************************************************************************

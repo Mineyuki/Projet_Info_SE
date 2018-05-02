@@ -9,6 +9,8 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <pthread.h>
+
 
 #define MAX_STATION 8 // Nombre de station
 #define MAX_STATION_BUS 5 // Nombre de station maximal de bus
