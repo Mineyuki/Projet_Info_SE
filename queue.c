@@ -3,12 +3,12 @@
 /*
  * Allouer un maillon
  */
-chain *new_chain(passenger passenger1)
+chain *new_chain(passenger *passenger1)
 {
     chain *chain1 = malloc(sizeof(chain)); // Alloue la taille d'un maillon
     if(chain1 == NULL)
     {
-        printf("Erreur queue.c : Impossible d'allouer un maillon.\n");
+        fprintf(stderr, "Erreur queue.c : Impossible d'allouer un maillon.\n");
         exit(EXIT_FAILURE);
     }
     chain1->data = passenger1; // Affecte a la donnee du maillon, un passager
@@ -23,7 +23,7 @@ queue *new_queue()
     queue *queue1 = malloc(sizeof(queue)); // Alloue la taille d'une file
     if(queue1 == NULL)
     {
-        printf("Erreur queue.c : Impossible d'allouer une file.\n");
+        fprintf(stderr, "Erreur queue.c : Impossible d'allouer une file.\n");
         exit(EXIT_FAILURE);
     }
     queue1->size = 0; // La taille est a 0
@@ -44,7 +44,7 @@ _Bool is_empty(queue *queue1)
  * Ajout d'elements dans la file
  * On ajoute forcement en queue de file
  */
-void push(queue *queue1, passenger passenger1)
+void push(queue *queue1, passenger *passenger1)
 {
     chain *chain1 = new_chain(passenger1); // Cree un nouveau maillon
     chain1->next = NULL; // Prochain maillon est a null
@@ -65,10 +65,10 @@ void push(queue *queue1, passenger passenger1)
  * Suppression d'elements dans la file
  * On retire forcement les elements en tete de file
  */
-passenger pop(queue *queue1)
+passenger *pop(queue *queue1)
 {
     chain *chain1 = queue1->head; // Recupere la tete du maillon
-    passenger passenger1 = chain1->data; // Recupere le passager
+    passenger *passenger1 = chain1->data; // Recupere le passager
 
     queue1->head = queue1->head->next; // La tete de la file devient la tete de la file suivante
     free(chain1); // Libere la memoire du maillon
@@ -106,14 +106,14 @@ chain *find_chain(queue *queue1, uint64_t position)
 /*
  * Supprimer une donnee a une position particuliere
  */
-passenger remove_position(queue *queue1, uint64_t position)
+passenger *remove_position(queue *queue1, uint64_t position)
 {
     chain *chain1, *chain_remove;
-    passenger passenger1;
+    passenger *passenger1;
 
     if(position >= queue1->size)
     { // Erreur : on demande a supprimer dans une position en dehors de la file
-        printf("Erreur queue.c : Impossible de supprimer le passager a la position %lu.\n", position);
+        fprintf(stderr, "Erreur queue.c : Impossible de supprimer le passager a la position %lu.\n", position);
         exit(EXIT_FAILURE);
     }
     else if (position == 0)
@@ -135,4 +135,20 @@ passenger remove_position(queue *queue1, uint64_t position)
         queue1->size -= 1; // Reduit la taille de la file
         return passenger1; // Retourne le passager
     }
+}
+
+/*
+ * Supprime une file
+ */
+void delete_queue(queue *queue1)
+{
+    passenger *passenger1;
+
+    while(!is_empty(queue1))
+    { // Tant que la file n'est pas vide
+        passenger1 = pop(queue1); // Recupere la donnee en tete
+        free(passenger1); // Libere l'espace de la donnee
+    }
+
+    free(queue1);
 }
