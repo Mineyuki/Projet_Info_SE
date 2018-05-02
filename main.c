@@ -79,7 +79,7 @@ int main(int argc, char* argv[])
  * Creation du tube de communication nomme
  ***********************************************************************************************************************
  */
-    int fd;
+    int32_t fd;
     char *myfifo = "communication.fifo";
 
     // Creation d'un tube nomme avec permission : READ, WRITE, EXECUTE/SEARCH by OWNER
@@ -97,11 +97,23 @@ int main(int argc, char* argv[])
 
     if((taxi = fork()) == 0)
     {
+        if((fd = open(myfifo, O_WRONLY)) == -1)
+        {
+            fprintf(stderr, "Impossible d'ouvrir l'entree du tube nomme.\n");
+            exit(EXIT_FAILURE);
+        }
 
+        close(fd);
     }
     else
     {
+        if((fd = open(myfifo, O_RDONLY)) == -1)
+        {
+            fprintf(stderr, "Impossible d'ouvrir l'entree du tube nomme.\n");
+            exit(EXIT_FAILURE);
+        }
 
+        close(fd);
     }
 
 /*
@@ -109,6 +121,8 @@ int main(int argc, char* argv[])
  * Liberation de la memoire
  ***********************************************************************************************************************
  */
+
+    unlink(myfifo);
 
     for(int index = 0; index < MAX_STATION; index++)
     { // Supprimer des files FIFO
@@ -170,6 +184,11 @@ int main()
 
         close(fd);
 
+        if((fd = open(myfifo, O_RDONLY)) == -1)
+        {
+            fprintf(stderr, "Impossible d'ouvrir l'entree du tube nomme.\n");
+            exit(EXIT_FAILURE);
+        }
     }
     else
     {
