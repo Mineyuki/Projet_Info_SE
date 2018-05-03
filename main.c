@@ -29,7 +29,7 @@ passenger *read_passenger(FILE *file)
  * Fonction thread pour autobus
  */
 
-void * thread_autobus(queue * arg)
+void * thread_autobus(void * args)
 {
     queue *bus_passenger = new_queue();
     uint32_t compteur_station = 0;
@@ -37,8 +37,7 @@ void * thread_autobus(queue * arg)
 
     while(1)
     {
-
-        while(arg[compteur_station].head->next !=NULL)
+        while(arg !=NULL)
         {
             if(bus_passenger->size > MAX_CAPACITY_BUS)
                 printf("Capacite maximale atteinte");
@@ -50,12 +49,12 @@ void * thread_autobus(queue * arg)
             {
                 if (bus_passenger->head->data->station_end == compteur_station)
                 {
-                    printf("[Bus] debarque le passager %d", arg[compteur_station].head->data->identification_number);
+                    printf("[Bus] debarque le passager %d", arg[compteur_station]->head->data->identification_number);
                     pop(bus_passenger);
                 }
                 bus_passenger->head = bus_passenger->head->next;
             }
-            arg[compteur_station].head = arg[compteur_station].head->next;
+            arg[compteur_station]->head = arg[compteur_station]->head->next;
         }
         compteur_station = compteur_station + 1;
     }
@@ -65,7 +64,7 @@ void * thread_autobus(queue * arg)
  * Fonction thread pour metro
  */
 
-void * thread_metro(queue * arg)
+void * thread_metro(void * arg)
 {
     uint32_t compteur_station = 5;
     queue *metro_passenger = new_queue();
@@ -109,7 +108,13 @@ void * thread_metro(queue * arg)
 
 void * thread_verificateur(void * arg)
 {
+    while(1)
+    {
+        for (int i = 0 ; i < MAX_STATION ; i ++)
+        {
 
+        }
+    }
 }
 
 int main(int argc, char* argv[])
@@ -216,7 +221,7 @@ int main(int argc, char* argv[])
  * Creation des threads
  * *********************************************************************************************************************
  */
-    if( pthread_create(&thread1, NULL, thread_autobus, NULL ) == -1)
+    if( pthread_create(&thread1, NULL, thread_autobus, increment_table_passenger ) == -1)
     {
         fprintf(stderr, "Impossible de creer le thread bus");
         exit(EXIT_FAILURE);
