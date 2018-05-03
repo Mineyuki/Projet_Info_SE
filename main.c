@@ -55,7 +55,10 @@ void * thread_autobus(queue * arg)
 void * thread_metro(queue * arg)
 {
     uint32_t compteur_station = 5;
-    chain *chain1;
+    queue **metro_passenger = malloc(2*sizeof(queue));
+    metro_passenger[0] = new_queue();
+    metro_passenger[0]->size = 8;
+
 
     while(compteur_station > 5 && compteur_station <= 8)
     {
@@ -63,12 +66,12 @@ void * thread_metro(queue * arg)
         {
 
         }
-        while (arg[compteur_station].head->next != NULL)
+        while (arg[compteur_station].head->next != NULL && metro_passenger[0]->size <= 8)
         {
-            chain1 = arg[compteur_station].head;
-            if(arg[compteur_station].head->data->station_end == compteur_station)
+            push(metro_passenger, arg[compteur_station].head)
+            if(metro_passenger[0]->head->data->station_end == compteur_station)
             {
-                printf("[Metro] debarque le passager %d", arg[compteur_station].head->data->identification_number);
+                printf("[Metro] debarque le passager %d", metro_passenger[0]->head->data->identification_number);
             }
             arg[compteur_station].head = arg[compteur_station].head->next;
 
