@@ -33,16 +33,14 @@ void * thread_autobus(queue * arg)
 {
     queue **bus_passenger = malloc(sizeof(queue));
     uint32_t compteur_station = 0;
-    bus_passenger[0]->size = 
+    bus_passenger[0]->size = 8;
 
-    chain *chain1;
     while(1)
     {
         while(arg[compteur_station].head->next !=NULL)
         {
             push(bus_passenger[0], bus_passenger[0]->head->data);
-            chain1 = arg[compteur_station].head;
-            if ( bus_passenger[0] == compteur_station)
+            if ( bus_passenger[0]->head->data->station_end == compteur_station)
             {
                 printf("[Bus] debarque le passager %d", arg[compteur_station].head->data->identification_number);
             }
