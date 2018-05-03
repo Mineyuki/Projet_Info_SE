@@ -31,9 +31,10 @@ passenger *read_passenger(FILE *file)
 
 void * thread_autobus(queue * arg)
 {
+
     uint32_t compteur_station = 0;
     chain *chain1;
-    while(compteur_station < 6)
+    while(1)
     {
         while(arg[compteur_station].head->next !=NULL)
         {
@@ -60,7 +61,7 @@ void * thread_metro(queue * arg)
     metro_passenger[0]->size = 8;
 
 
-    while(compteur_station > 5 && compteur_station <= 8)
+    while(1)
     {
         if(compteur_station > 8)
         {
@@ -68,7 +69,7 @@ void * thread_metro(queue * arg)
         }
         while (arg[compteur_station].head->next != NULL && metro_passenger[0]->size <= 8)
         {
-            push(metro_passenger, arg[compteur_station].head)
+            push(metro_passenger, arg[compteur_station].head);
             if(metro_passenger[0]->head->data->station_end == compteur_station)
             {
                 printf("[Metro] debarque le passager %d", metro_passenger[0]->head->data->identification_number);
