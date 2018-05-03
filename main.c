@@ -31,17 +31,17 @@ passenger *read_passenger(FILE *file)
 
 void * thread_autobus(queue * arg)
 {
-    queue **bus_passenger = malloc(sizeof(queue));
+    queue *bus_passenger = new_queue();
     uint32_t compteur_station = 0;
-    bus_passenger[0]->size = 8;
+    bus_passenger->size = 8;
 
     while(1)
     {
         while(arg[compteur_station].head->next !=NULL)
         {
-            push(bus_passenger[0], bus_passenger[0]->head->data);
-            printf("[Bus] transfert du passager %d, vers %d", bus_passenger[0]->head->data->identification_number, bus_passenger[0]->head->data->station_end);
-            if ( bus_passenger[0]->head->data->station_end == compteur_station)
+            push(bus_passenger, bus_passenger->head->data);
+            printf("[Bus] transfert du passager %d, vers %d", bus_passenger->head->data->identification_number, bus_passenger->head->data->station_end);
+            if ( bus_passenger->head->data->station_end == compteur_station)
             {
                 printf("[Bus] debarque le passager %d", arg[compteur_station].head->data->identification_number);
             }
@@ -58,9 +58,8 @@ void * thread_autobus(queue * arg)
 void * thread_metro(queue * arg)
 {
     uint32_t compteur_station = 5;
-    queue **metro_passenger = malloc(sizeof(queue));
-    metro_passenger[0] = new_queue();
-    metro_passenger[0]->size = 8;
+    queue *metro_passenger = new_queue();
+    metro_passenger->size = 8;
 
 
     while(1)
@@ -69,13 +68,13 @@ void * thread_metro(queue * arg)
         {
 
         }
-        while (arg[compteur_station].head->next != NULL && metro_passenger[0]->size <= 8)
+        while (arg[compteur_station].head->next != NULL && metro_passenger->size <= 8)
         {
-            push(metro_passenger[0], arg[compteur_station].head->data);
-            printf("[metro] transfert du passager %d vers station %d", metro_passenger[0]->head->data->identification_number, metro_passenger[0]->head->data->station_end);
-            if(metro_passenger[0]->head->data->station_end == compteur_station)
+            push(metro_passenger, arg[compteur_station].head->data);
+            printf("[metro] transfert du passager %d vers station %d", metro_passenger->head->data->identification_number, metro_passenger->head->data->station_end);
+            if(metro_passenger->head->data->station_end == compteur_station)
             {
-                printf("[Metro] debarque le passager %d", metro_passenger[0]->head->data->identification_number);
+                printf("[Metro] debarque le passager %d", metro_passenger->head->data->identification_number);
             }
             arg[compteur_station].head = arg[compteur_station].head->next;
 
@@ -108,6 +107,11 @@ int main(int argc, char* argv[])
     pthread_t thread1;
     pthread_t thread2;
     pthread_t thread3;
+
+    // Creation de la file pour metro et bus
+    queue * metro_passenger = new_queue();
+    queue * bus_passenger = new_queue();
+
 
     FILE *file = fopen(argv[1], "rt"); // On recupere le fichier passe en parametre
     if(file == NULL)
