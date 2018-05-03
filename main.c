@@ -46,9 +46,14 @@ void * thread_autobus(queue * arg)
                 push(bus_passenger, bus_passenger->head->data);
 
             printf("[Bus] transfert du passager %d, vers %d", bus_passenger->head->data->identification_number, bus_passenger->head->data->station_end);
-            if ( bus_passenger->head->data->station_end == compteur_station)
+            while(bus_passenger->head->next != NULL)
             {
-                printf("[Bus] debarque le passager %d", arg[compteur_station].head->data->identification_number);
+                if (bus_passenger->head->data->station_end == compteur_station)
+                {
+                    printf("[Bus] debarque le passager %d", arg[compteur_station].head->data->identification_number);
+                    pop(bus_passenger);
+                }
+                bus_passenger->head = bus_passenger->head->next;
             }
             arg[compteur_station].head = arg[compteur_station].head->next;
         }
@@ -79,9 +84,14 @@ void * thread_metro(queue * arg)
             else
                 push(metro_passenger, arg[compteur_station].head->data);
             printf("[metro] transfert du passager %d vers station %d", metro_passenger->head->data->identification_number, metro_passenger->head->data->station_end);
-            if(metro_passenger->head->data->station_end == compteur_station)
+            while(metro_passenger->head->next != NULL)
             {
-                printf("[Metro] debarque le passager %d", metro_passenger->head->data->identification_number);
+                if (metro_passenger->head->data->station_end == compteur_station)
+                {
+                    printf("[Metro] debarque le passager %d", metro_passenger->head->data->identification_number);
+                    pop(metro_passenger);
+                }
+                metro_passenger->head = metro_passenger->head->next;
             }
             arg[compteur_station].head = arg[compteur_station].head->next;
 
