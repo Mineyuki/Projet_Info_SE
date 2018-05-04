@@ -2,6 +2,14 @@
 #include "queue.h" // Librairie personnelle : file FIFO de type passenger
 
 /*
+ * Variable globale
+ */
+queue * metro_passenger;
+queue * bus_passenger;
+
+
+
+/*
  * Lit un passager dans le fichier passe en parametre et retourne ce passager
  */
 passenger *read_passenger(FILE *file)
@@ -29,9 +37,9 @@ passenger *read_passenger(FILE *file)
  * Fonction thread pour autobus
  */
 
-void * thread_autobus(void * args)
+void * thread_autobus(queue ** arg)
 {
-    queue *bus_passenger = new_queue();
+    bus_passenger = new_queue();
     uint32_t compteur_station = 0;
 
 
@@ -64,10 +72,10 @@ void * thread_autobus(void * args)
  * Fonction thread pour metro
  */
 
-void * thread_metro(void * arg)
+void * thread_metro(queue **arg)
 {
     uint32_t compteur_station = 5;
-    queue *metro_passenger = new_queue();
+    metro_passenger = new_queue();
 
 
     while(1)
@@ -76,12 +84,12 @@ void * thread_metro(void * arg)
         {
 
         }
-        while (arg[compteur_station].head->next != NULL && metro_passenger->size <= 8)
+        while (arg[compteur_station]->head->next != NULL && metro_passenger->size <= 8)
         {
             if (metro_passenger->size > MAX_CAPACITY_SUBWAY)
                 printf("Capacite maximale du metro atteinte");
             else
-                push(metro_passenger, arg[compteur_station].head->data);
+                push(metro_passenger, arg[compteur_station]->head->data);
             printf("[metro] transfert du passager %d vers station %d", metro_passenger->head->data->identification_number, metro_passenger->head->data->station_end);
             while(metro_passenger->head->next != NULL)
             {
@@ -92,7 +100,7 @@ void * thread_metro(void * arg)
                 }
                 metro_passenger->head = metro_passenger->head->next;
             }
-            arg[compteur_station].head = arg[compteur_station].head->next;
+            arg[compteur_station]->head = arg[compteur_station]->head->next;
 
 
         }
@@ -131,9 +139,6 @@ int main(int argc, char* argv[])
     pthread_t thread3;
 
     // Creation de la file pour metro et bus
-    queue * metro_passenger = new_queue();
-    queue * bus_passenger = new_queue();
-
 
     FILE *file = fopen(argv[1], "rt"); // On recupere le fichier passe en parametre
     if(file == NULL)
