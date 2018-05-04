@@ -47,10 +47,10 @@ void * thread_autobus(queue ** arg)
     {
         while(arg !=NULL)
         {
-            if(bus_passenger->size > MAX_CAPACITY_BUS)
+            if(bus_passenger->size > MAX_CAPACITY_BUS) // Test si la capacité du bus est atteinte
                 printf("Capacite maximale atteinte");
             else
-                push(bus_passenger, bus_passenger->head->data);
+                push(bus_passenger, bus_passenger->head->data); //Rajoute le voyageur dans la file du bus
 
             printf("[Bus] transfert du passager %d, vers %d", bus_passenger->head->data->identification_number, bus_passenger->head->data->station_end);
             while(bus_passenger->head->next != NULL)
@@ -84,12 +84,12 @@ void * thread_metro(queue **arg)
         {
 
         }
-        while (arg[compteur_station]->head->next != NULL && metro_passenger->size <= 8)
+        while (arg[compteur_station]->head->next != NULL && metro_passenger->size <= 8)  // Parcours de files
         {
             if (metro_passenger->size > MAX_CAPACITY_SUBWAY)
                 printf("Capacite maximale du metro atteinte");
             else
-                push(metro_passenger, arg[compteur_station]->head->data);
+                push(metro_passenger, arg[compteur_station]->head->data); // Rajoute le voyageur dans la file du metro
             printf("[metro] transfert du passager %d vers station %d", metro_passenger->head->data->identification_number, metro_passenger->head->data->station_end);
             while(metro_passenger->head->next != NULL)
             {
