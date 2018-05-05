@@ -119,6 +119,8 @@ void * thread_metro(queue **arg)
 
 void * thread_verificateur(queue** arg)
 {
+    char * myfifo = "communication.fifo";
+    int fd;
     while(1)
     {
         for (int i = 0 ; i < MAX_STATION ; i ++)
@@ -129,6 +131,17 @@ void * thread_verificateur(queue** arg)
                 if(arg[i]->head->data->wait_time_past == arg[i]->head->data->wait_time_maximum)
                 {
                     printf("Le passager %d a depasse son temps d'attente", arg[i]->head->data->identification_number);
+                    if((fd =open(myfifo, O_WRONLY)) == -1)
+                    {
+                        printf("Erreur d'ouverture du pipe nomme");
+                    }
+                    else
+                    {
+                        write(fd,arg[i]->head, sizeof(arg[i]->head));
+                        printf("verificateur : transfert du passager %d vers le taxi ",arg[i]->head->data->identification_number );
+                        close(fd);
+                    }
+
                 }
                 arg[i]->head = arg[i]->head->next;
 
