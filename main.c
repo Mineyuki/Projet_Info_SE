@@ -7,6 +7,9 @@
 queue * metro_passenger;
 queue * bus_passenger;
 
+pthread_t thread1;
+pthread_t thread2;
+pthread_t thread3;
 
 
 /*
@@ -114,14 +117,25 @@ void * thread_metro(queue **arg)
  * Fonction pour le thread verificateur
  */
 
-void * thread_verificateur(void * arg)
+void * thread_verificateur(queue** arg)
 {
     while(1)
     {
         for (int i = 0 ; i < MAX_STATION ; i ++)
         {
+            while(arg[i]->head->next != NULL)
+            {
+                arg[i]->head->data->wait_time_past ++;
+                if(arg[i]->head->data->wait_time_past == arg[i]->head->data->wait_time_maximum)
+                {
+                    printf("Le passager %d a depasse son temps d'attente", arg[i]->head->data->identification_number);
+                }
+                arg[i]->head = arg[i]->head->next;
+
+            }
 
         }
+
     }
 }
 
@@ -134,9 +148,7 @@ int main(int argc, char* argv[])
  ***********************************************************************************************************************
  */
     pid_t taxi;
-    pthread_t thread1;
-    pthread_t thread2;
-    pthread_t thread3;
+
 
     // Creation de la file pour metro et bus
 
