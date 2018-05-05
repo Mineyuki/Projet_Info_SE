@@ -130,15 +130,15 @@ void * thread_verificateur(queue** arg)
                 arg[i]->head->data->wait_time_past ++;
                 if(arg[i]->head->data->wait_time_past == arg[i]->head->data->wait_time_maximum)
                 {
-                    printf("Le passager %d a depasse son temps d'attente", arg[i]->head->data->identification_number);
+                    printf("Le passager %d a depasse son temps d'attente\n", arg[i]->head->data->identification_number);
                     if((fd =open(myfifo, O_WRONLY)) == -1)
                     {
-                        printf("Erreur d'ouverture du pipe nomme");
+                        printf("Erreur d'ouverture du pipe nomme\n");
                     }
                     else
                     {
                         write(fd,arg[i]->head, sizeof(arg[i]->head));
-                        printf("verificateur : transfert du passager %d vers le taxi ",arg[i]->head->data->identification_number );
+                        printf("verificateur : transfert du passager %d vers le taxi \n",arg[i]->head->data->identification_number );
                         close(fd);
                     }
 
