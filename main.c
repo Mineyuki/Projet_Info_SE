@@ -3,7 +3,6 @@
 
 uint32_t profit = 0;
 uint32_t number_passenger; // Nombre de passager
-queue *arrived_passenger; // Passager arrive
 
 pthread_mutex_t mutex_bus = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_subway = PTHREAD_MUTEX_INITIALIZER;
@@ -106,7 +105,7 @@ void *thread_bus(queue **table_passenger)
 
                 // Il assure le debarquement du passager en question en ajustant sa liste de passagers
                 passenger_bus = remove_chain(bus_passenger_list, &chain_bus);
-                push(arrived_passenger, passenger_bus); // Passager arrive a sa station
+                free(passenger_bus);
                 number_passenger -= 1;
             }
             else if((count_station == 0) && (chain_bus->data->transfert == 1))
@@ -194,7 +193,7 @@ void *thread_subway(queue **table_passenger)
 
                 // Il assure le debarquement du passager en question en ajustant sa liste des passagers
                 passenger_subway = remove_chain(subway_passenger_list, &chain_subway);
-                push(arrived_passenger, passenger_subway);
+                free(passenger_subway);
                 number_passenger -= 1;
             }
             else if((count_station == 0) && (chain_subway->data->transfert == 1))
@@ -329,7 +328,7 @@ void *thread_taxi(void *args)
                passenger_taxi->identification_number,
                passenger_taxi->station_end);
         profit = profit + 3; // Debourse 1$
-        push(arrived_passenger, passenger_taxi); // Passager arrive
+        free(passenger_taxi);
         number_passenger -= 1;
     }
 
@@ -393,7 +392,6 @@ int main(int argc, char* argv[])
  */
 
     pthread_t pthread_id[3];
-    arrived_passenger = new_queue();
 
     if(fork())
     { // Creation des threads
@@ -463,8 +461,6 @@ int main(int argc, char* argv[])
     { // Supprimer des files FIFO
         delete_queue(table_passenger[index]);
     }
-
-    delete_queue(arrived_passenger);
 
     free(table_passenger);
 
