@@ -53,8 +53,6 @@ void *thread_bus(queue **table_passenger)
             count_station = 0;
         }
 
-        printf("DEBUT BUS %u\n", count_station);
-
         chain_bus = bus_passenger_list->head; // On recupere la tete de la liste de passager du bus
 
         while(chain_bus != NULL)
@@ -116,7 +114,6 @@ void *thread_bus(queue **table_passenger)
          * du thread autobus s'execute en concurrence avec un cycle du thread metro. Ces deux cycles sont toujours
          * suivis d'un cycle du thread verificateur
          */
-        printf("FIN BUS %u\n", count_station);
         sem_post(&rendez_vous_check_bus);
     }
 
@@ -157,8 +154,6 @@ void *thread_subway(queue **table_passenger)
             increment = false;
             count_station -= 1;
         }
-
-        printf("DEBUT METRO %u\n", count_station);
 
         chain_subway = subway_passenger_list->head; // On recupere la tete de la liste de passager du metro
 
@@ -220,7 +215,6 @@ void *thread_subway(queue **table_passenger)
          * du thread autobus s'execute en concurrence avec un cycle du thread metro. Ces deux cycles sont toujours
          * suivis d'un cycle du thread verificateur
          */
-        printf("FIN METRO %u\n", count_station);
         sem_post(&rendez_vous_check_subway);
     }
 
@@ -244,7 +238,6 @@ void *thread_check(queue** table_passenger)
         sem_wait(&rendez_vous_check_bus);
         sem_wait(&rendez_vous_check_subway);
 
-        printf("DEBUT CHECK\n");
         for(index = 0; index < MAX_STATION; index++)
         { // Parcours toutes les stations
             chain_passenger = table_passenger[index]->head; // On recupere la tete de la file d'attente de passager
@@ -283,7 +276,6 @@ void *thread_check(queue** table_passenger)
                 }
             }
         }
-        printf("FIN CHECK\n");
         sem_post(&rendez_vous_bus);
         sem_post(&rendez_vous_subway);
     }
@@ -312,7 +304,6 @@ void *thread_taxi(void *args)
 
         read(fd, &passenger_taxi, sizeof(int32_t)); // Recuperer les demandes du pipe (lecture bloquante)
         close(fd); // Fermeture du pipe
-
         pthread_mutex_unlock(&mutex_taxi);
 
         usleep(10); // Simule l'action de reconduire un passager
@@ -320,6 +311,7 @@ void *thread_taxi(void *args)
                pthread_self(),
                passenger_taxi->identification_number,
                passenger_taxi->station_end);
+
         profit = profit + 3; // Debourse 1$
         free(passenger_taxi);
         number_passenger -= 1;
@@ -368,7 +360,6 @@ int main(int argc, char* argv[])
  * Creation du tube de communication nomme
  ***********************************************************************************************************************
  */
-    int32_t fd;
     char *myfifo = "communication.fifo";
 
     // Creation d'un tube nomme avec permission : READ, WRITE, EXECUTE/SEARCH by OWNER
@@ -411,8 +402,6 @@ int main(int argc, char* argv[])
             fprintf(stderr, "Impossible de creer le thread verificateur");
             exit(EXIT_FAILURE);
         }
-
-        close(fd);
 
         for(index = 0; index < 3; index++)
         { // Attente de la fin de chaque taxi
