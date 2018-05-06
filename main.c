@@ -99,7 +99,8 @@ void *thread_bus(queue **table_passenger)
         while(chain_bus != NULL)
         { // Parcours de la liste de passager du bus
 
-            if (chain_bus->data->station_end == count_station)
+            if((chain_bus->data->station_end == count_station) ||
+               (chain_bus->data->station_end == MAX_STATION_BUS))
             { // Verifier dans la liste de passager du bus si un passager est arrive a destination
                 printf("[bus] : [debarque] le passager %u\n", chain_bus->data->identification_number);
 
@@ -188,7 +189,8 @@ void *thread_subway(queue **table_passenger)
         while(chain_subway != NULL)
         { // Parcours de la liste de passager du metro
 
-            if(chain_subway->data->station_end == count_station)
+            if((chain_subway->data->station_end == count_station) ||
+               (chain_subway->data->station_end == 0))
             { // Verifier dans la liste de passager du bus si un passager est arrive a destination
                 printf("[metro] : [debarque] le passager %u\n", chain_subway->data->identification_number);
 
