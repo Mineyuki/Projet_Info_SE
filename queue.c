@@ -83,6 +83,87 @@ passenger *pop(queue *queue1)
 }
 
 /*
+ * Trouve un maillon a une position particuliere
+ */
+chain *find_chain(queue *queue1, uint64_t position)
+{
+    chain *chain1 = queue1->head;
+    uint64_t index;
+
+    if(position >= queue1->size)
+    { // Erreur on demande une position en dehors de la liste
+        return NULL;
+    }
+
+    for(index = 0; index < position; index++)
+    { // Cherche la chaine a la position donnee
+        chain1 = chain1->next;
+    }
+
+    return chain1;
+}
+
+/*
+ * Trouve la position d'un passager selon son numero d'identification unique
+ */
+uint64_t find_passenger_position(queue *queue1, chain *chain_search)
+{
+    chain *chain1 = queue1->head;
+    uint64_t index;
+
+    if(chain_search == NULL)
+    {
+        fprintf(stderr, "Erreur queue.c : Maillon inexistant\n");
+        exit(EXIT_FAILURE);
+    }
+
+    for(index = 0; index < queue1->size; index++)
+    { // Cherche la chaine a la position donnee
+        if(chain1->data->identification_number == chain_search->data->identification_number)
+        {
+            return index;
+        }
+        chain1 = chain1->next;
+    }
+
+    return index;
+}
+/*
+ * Supprime une donnée a une position particuliere
+ */
+passenger *remove_chain(queue *queue1, uint64_t position)
+{
+    chain *chain_remove, *chain1;
+    passenger *passenger1;
+
+    if(position >= queue1->size)
+    { // Erreur : on demande a supprimer dans une position en dehors de la liste
+        fprintf(stderr, "Erreur main.c : Impossible de supprimer en dehors de la position de la liste\n");
+        exit(EXIT_FAILURE);
+    }
+    else if (position == 0)
+    { // Si le maillon est en tete
+        return pop(queue1);
+    }
+    else
+    { // Sinon
+        chain1 = find_chain(queue1, position-1); // Recupere le maillon precedent du maillon a supprimer
+        chain_remove = chain1->next;
+        passenger1 = chain_remove->data; // Recupere le passager
+        chain1->next = chain_remove->next;
+
+        if(queue1->tail == chain_remove)
+        { // Si le maillon a supprimer est a la queue de la liste
+            queue1->tail = chain1; // La nouvelle queue devient le maillon precedent
+        }
+
+        free(chain_remove); // Supprime le maillon a supprimer
+        queue1->size -= 1; // Reduit la taille de la liste
+        return passenger1; // Retourne le passager
+    }
+}
+
+/*
  * Supprime une file
  */
 void delete_queue(queue *queue1)

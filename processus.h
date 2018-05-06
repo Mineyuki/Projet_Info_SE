@@ -3,6 +3,7 @@
 
 #include <fcntl.h>
 #include <unistd.h>
+#include <semaphore.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <pthread.h>
@@ -16,7 +17,6 @@
 #define MAX_CAPACITY_SUBWAY 8 // Capacite maximale d'un train
 
 passenger *read_passenger(FILE *); // Lit un passager dans le fichier passe en parametre et retourne ce passager
-passenger *remove_chain(queue *, chain **); // Supprime un maillon d'une liste de passager et retourne le passager et le maillon suivant
 void *thread_bus(queue **); // Thread du bus
 void *thread_subway(queue **); // Thread du metro
 void *thread_check(queue **); // Thread verificateur

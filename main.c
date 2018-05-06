@@ -1,4 +1,3 @@
-#include <semaphore.h>
 #include "processus.h"
 #include "queue.h"
 
@@ -34,51 +33,11 @@ passenger *read_passenger(FILE *file)
 }
 
 /*
- * Supprime un maillon d'une liste de passager
- * Retourne le passager et le maillon suivant
- */
-passenger *remove_chain(queue *queue1, chain **chain_remove)
-{
-    chain *chain_temp;
-    passenger *passenger1;
-
-    if((*chain_remove) == NULL)
-    { // Erreur : on demande a supprimer dans une chaine inexistante
-        fprintf(stderr, "Erreur main.c : Impossible de supprimer le passager inexistant\n");
-        exit(EXIT_FAILURE);
-    }
-    else if ((*chain_remove) == queue1->head)
-    { // Si le maillon est en tete
-        passenger1 = pop(queue1); // Retourne la tete de la liste
-
-        (*chain_remove) = queue1->head; // Recupere la tete de la liste
-
-        return passenger1;
-    }
-    else
-    { // Sinon
-        chain_temp = (*chain_remove)->next; // Recupere le maillon suivant du maillon a supprimer
-        passenger1 = (*chain_remove)->data; // Recupere le passager
-
-        if(queue1->tail == (*chain_remove))
-        { // Si le maillon a supprimer est a la queue de la liste
-            queue1->tail = chain_temp; // La nouvelle queue devient le maillon
-        }
-
-        free(*chain_remove); // Supprime le maillon a supprimer
-
-        queue1->size -= 1; // Reduit la taille de la liste
-        (*chain_remove) = chain_temp;
-
-        return passenger1; // Retourne le maillon suivant
-    }
-}
-
-/*
  * Fonction thread pour autobus
  */
 void *thread_bus(queue **table_passenger)
 {
+    uint64_t passenger_position = 0; // Position du passager
     uint32_t count_station = 0; // Compteur de la station
     chain *chain_bus;
     passenger *passenger_bus;
@@ -106,8 +65,10 @@ void *thread_bus(queue **table_passenger)
             { // Verifier dans la liste de passager du bus si un passager est arrive a destination
                 printf("[bus] : [debarque] le passager %u\n", chain_bus->data->identification_number);
 
+                passenger_position = find_passenger_position(bus_passenger_list, chain_bus);
+                chain_bus = chain_bus->next;
                 // Il assure le debarquement du passager en question en ajustant sa liste de passagers
-                passenger_bus = remove_chain(bus_passenger_list, &chain_bus);
+                passenger_bus = remove_chain(bus_passenger_list, passenger_position);
                 free(passenger_bus);
                 number_passenger -= 1;
             }
@@ -116,8 +77,12 @@ void *thread_bus(queue **table_passenger)
                 printf("[bus] : transfert passager %u vers station %u\n",
                        chain_bus->data->identification_number,
                        MAX_STATION_BUS);
+
+                passenger_position = find_passenger_position(bus_passenger_list, chain_bus);
+                chain_bus = chain_bus->next;
+
                 // Transfere le passager vers la queue des stations 0 a 5
-                passenger_bus = remove_chain(bus_passenger_list, &chain_bus);
+                passenger_bus = remove_chain(bus_passenger_list, passenger_position);
                 push(table_passenger[MAX_STATION_BUS], passenger_bus);
                 profit = profit + 1; // Debourse 1$
             }
@@ -164,6 +129,7 @@ void *thread_bus(queue **table_passenger)
  */
 void *thread_subway(queue **table_passenger)
 {
+    uint64_t passenger_position = 0; // Position du passager
     uint32_t count_station = MAX_STATION_BUS; // Compteur de la station
     _Bool increment = true; // Test pour verifier si on incremente le compteur ou decremente
     chain *chain_subway;
@@ -189,6 +155,7 @@ void *thread_subway(queue **table_passenger)
         else if (count_station == MAX_STATION)
         { // Sinon, on decrementera
             increment = false;
+            count_station -= 1;
         }
 
         printf("DEBUT METRO %u\n", count_station);
@@ -203,8 +170,10 @@ void *thread_subway(queue **table_passenger)
             { // Verifier dans la liste de passager du bus si un passager est arrive a destination
                 printf("[metro] : [debarque] le passager %u\n", chain_subway->data->identification_number);
 
+                passenger_position = find_passenger_position(subway_passenger_list, chain_subway);
+                chain_subway = chain_subway->next;
                 // Il assure le debarquement du passager en question en ajustant sa liste des passagers
-                passenger_subway = remove_chain(subway_passenger_list, &chain_subway);
+                passenger_subway = remove_chain(subway_passenger_list, passenger_position);
                 free(passenger_subway);
                 number_passenger -= 1;
             }
@@ -213,8 +182,11 @@ void *thread_subway(queue **table_passenger)
                 printf("[metro] : transfert passager %u vers station %u\n",
                        chain_subway->data->identification_number,
                        0);
+
+                passenger_position = find_passenger_position(subway_passenger_list, chain_subway);
+                chain_subway = chain_subway->next;
                 // Tranfere le passager vers la queue des stations 5 a 0
-                passenger_subway = remove_chain(subway_passenger_list, &chain_subway);
+                passenger_subway = remove_chain(subway_passenger_list, passenger_position);
                 push(table_passenger[0], passenger_subway);
                 profit = profit + 1; // Debourse 1$
             }
@@ -261,6 +233,7 @@ void *thread_subway(queue **table_passenger)
  */
 void *thread_check(queue** table_passenger)
 {
+    uint64_t passenger_position;
     char *myfifo = "communication.fifo";
     int fd, index;
     chain *chain_passenger;
@@ -275,6 +248,7 @@ void *thread_check(queue** table_passenger)
         for(index = 0; index < MAX_STATION; index++)
         { // Parcours toutes les stations
             chain_passenger = table_passenger[index]->head; // On recupere la tete de la file d'attente de passager
+            passenger_position = 0;
 
             while(chain_passenger != NULL)
             { // Parcours de la file d'attente de passager
@@ -289,7 +263,9 @@ void *thread_check(queue** table_passenger)
                         exit(EXIT_FAILURE);
                     }
 
-                    passenger_check = remove_chain(table_passenger[index], &chain_passenger); // Recuperation du passager
+                    passenger_position = find_passenger_position(table_passenger[index], chain_passenger);
+                    chain_passenger = chain_passenger->next;
+                    passenger_check = remove_chain(table_passenger[index], passenger_position); // Recuperation du passager
                     /*
                      * Transferer le passager de la queue autobus/metro vers le tube nomme memorisant les passagers en
                      * attente de taxis.

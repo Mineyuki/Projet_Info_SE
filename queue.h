@@ -45,5 +45,8 @@ _Bool is_empty(queue *); // Fonction de test sur la file
 void push(queue *, passenger*); // Ajout d'elements dans la file
 passenger *pop(queue *); // Suppression d'element dans la file
 void delete_queue(queue *); // Suppression d'une file
+chain *find_chain(queue *, uint64_t); // Trouve un maillon a une position particuliere
+uint64_t find_passenger_position(queue *, chain *); // Trouve la position d'un passager selon son numero d'identification unique
+passenger *remove_chain(queue *, uint64_t); // Supprime une donnée a une position particuliere
 
 #endif
