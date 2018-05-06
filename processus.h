@@ -11,11 +11,9 @@
 
 #define MAX_STATION 8 // Nombre de station
 #define MAX_STATION_BUS 5 // Nombre de station maximal de bus
-#define MAX_STATION_SUBWAY 3 // Nombre de station maximal de metro
 #define MAX_TAXI 3 // Nombre maximale de taxi
 #define MAX_CAPACITY_BUS 5 // Capacite maximale d'un bus
 #define MAX_CAPACITY_SUBWAY 8 // Capacite maximale d'un train
-#define MAX_CAPACITY_TAXI 1 // Capacite maximale d'un taxi
 
 passenger *read_passenger(FILE *); // Lit un passager dans le fichier passe en parametre et retourne ce passager
 passenger *remove_chain(queue *, chain **); // Supprime un maillon d'une liste de passager et retourne le passager et le maillon suivant
