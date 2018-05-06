@@ -5,7 +5,6 @@ uint32_t profit = 0;
 uint32_t number_passenger; // Nombre de passager
 
 sem_t rendez_vous_bus, rendez_vous_subway, rendez_vous_check_bus, rendez_vous_check_subway;
-pthread_mutex_t mutex_taxi = PTHREAD_MUTEX_INITIALIZER;
 
 /*
  * Lit un passager dans le fichier passe en parametre et retourne ce passager
@@ -253,7 +252,7 @@ void *thread_check(queue** table_passenger)
                     if((fd = open(myfifo, O_WRONLY)) == -1)
                     { // Ouverture du pipe nomme
                         fprintf(stderr, "Erreur main.c : Impossible d'ouvrir l'entree du tube nomme.\n");
-                        //exit(EXIT_FAILURE);
+                        exit(EXIT_FAILURE);
                     }
 
                     passenger_position = find_passenger_position(table_passenger[index], chain_passenger);
@@ -294,18 +293,13 @@ void *thread_taxi(void *args)
 
     while(number_passenger > 0)
     {
-        pthread_mutex_lock(&mutex_taxi); // Evite que tous les taxi se jette sur le meme passager
-
         if((fd = open(myfifo, O_RDONLY)) == -1)
         { // Ouverture du pipe nomme
             fprintf(stderr, "Impossible d'ouvrir l'entree du tube nomme.\n");
-            //exit(EXIT_FAILURE);
+            exit(EXIT_FAILURE);
         }
 
         read(fd, &passenger_taxi, sizeof(passenger)); // Recuperer les demandes du pipe (lecture bloquante)
-        close(fd); // Fermeture du pipe
-
-        pthread_mutex_unlock(&mutex_taxi);
 
         usleep(10); // Simule l'action de reconduire un passager
 
@@ -313,6 +307,8 @@ void *thread_taxi(void *args)
                pthread_self(),
                passenger_taxi->identification_number,
                passenger_taxi->station_end);
+
+        close(fd); // Fermeture du pipe
 
         profit = profit + 3; // Debourse 1$
         free(passenger_taxi);
@@ -434,8 +430,6 @@ int main(int argc, char* argv[])
         }
 
         free(pthread_id_taxi);
-
-        printf("Profit de la journee : %u $\n", profit);
     }
 
 /*
@@ -456,6 +450,8 @@ int main(int argc, char* argv[])
     }
 
     free(table_passenger);
+
+    printf("Profit de la journee : %u $\n", profit);
 
     return EXIT_SUCCESS;
 }
