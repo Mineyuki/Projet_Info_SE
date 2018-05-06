@@ -83,61 +83,6 @@ passenger *pop(queue *queue1)
 }
 
 /*
- * Trouver un maillon a une position particuliere
- */
-chain *find_chain(queue *queue1, uint64_t position)
-{
-    chain *chain1 = queue1->head; // Recupere le maillon a la tete de la file
-    uint64_t index;
-
-    if(position >= queue1->size)
-    { // Erreur : on demande une position en dehors de la file
-        return NULL;
-    }
-
-    for(index = 0; index < position; index++)
-    { // Parcours la file
-        chain1 = chain1->next;
-    }
-
-    return chain1; // Retourne le maillon
-}
-
-/*
- * Supprimer une donnee a une position particuliere
- */
-passenger *remove_position(queue *queue1, uint64_t position)
-{
-    chain *chain1, *chain_remove;
-    passenger *passenger1;
-
-    if(position >= queue1->size)
-    { // Erreur : on demande a supprimer dans une position en dehors de la file
-        fprintf(stderr, "Erreur queue.c : Impossible de supprimer le passager a la position %lu.\n", position);
-        exit(EXIT_FAILURE);
-    }
-    else if (position == 0)
-    { // Si la position se trouve a la tete
-        return pop(queue1); // Retourne la tete de la file
-    }
-    else
-    { // Sinon
-        chain1 = find_chain(queue1, position-1); // Trouve le maillon a la position precedente
-        chain_remove = chain1->next; // Recupere le maillon a supprimer
-        passenger1 = chain_remove->data; // Recupere le passager
-        chain1->next = chain_remove->next; // Le maillon suivant est le maillon suivant du maillon a supprimer
-        if(queue1->tail == chain_remove)
-        { // Si le maillon a supprimer est a la queue de la file
-            queue1->tail = chain1; // La nouvelle queue devient le maillon
-        }
-
-        free(chain_remove); // Supprime le maillon a supprimer
-        queue1->size -= 1; // Reduit la taille de la file
-        return passenger1; // Retourne le passager
-    }
-}
-
-/*
  * Supprime une file
  */
 void delete_queue(queue *queue1)

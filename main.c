@@ -1,9 +1,7 @@
 #include "processus.h"
-#include "queue.h"
 
 uint32_t number_passenger; // Nombre de passager
 queue *arrived_passenger; // Passager arrive
-pthread_t pthread_id[3];
 
 /*
  * Lit un passager dans le fichier passe en parametre et retourne ce passager
@@ -102,6 +100,7 @@ void *thread_bus(queue **table_passenger)
                 // Il assure le debarquement du passager en question en ajustant sa liste de passagers
                 passenger_bus = remove_chain(bus_passenger_list, &chain_bus);
                 push(arrived_passenger, passenger_bus); // Passager arrive a sa station
+                number_passenger -= 1;
             }
             else if((count_station == 0) && (chain_bus->data->transfert == 1))
             { // Verifie le transfert des passagers vers la queue de la station de metro
@@ -186,6 +185,7 @@ void *thread_subway(queue **table_passenger)
                 // Il assure le debarquement du passager en question en ajustant sa liste des passagers
                 passenger_subway = remove_chain(subway_passenger_list, &chain_subway);
                 push(arrived_passenger, passenger_subway);
+                number_passenger -= 1;
             }
             else if((count_station == 0) && (chain_subway->data->transfert == 1))
             { // Verifie le transfert des passagers vers la queue de la station de bus
@@ -230,37 +230,51 @@ void *thread_subway(queue **table_passenger)
 /*
  * Fonction pour le thread verificateur
  */
-void *thread_check(queue** arg)
+void *thread_check(queue** table_passenger)
 {
     char *myfifo = "communication.fifo";
-    int fd;
+    int fd, index;
+    chain *chain_passenger;
+    passenger *passenger_check;
 
     while(number_passenger > 0)
     {
-        for (int i = 0 ; i < MAX_STATION ; i ++)
-        {
-            while(arg[i]->head->next != NULL)
-            {
-                arg[i]->head->data->wait_time_past ++;
-                if(arg[i]->head->data->wait_time_past == arg[i]->head->data->wait_time_maximum)
+        for(index = 0; index < MAX_STATION; index++)
+        { // Parcours toutes les stations
+            chain_passenger = table_passenger[index]->head; // On recupere la tete de la file d'attente de passager
+
+            while(chain_passenger != NULL)
+            { // Parcours de la file d'attente de passager
+                chain_passenger->data->wait_time_past += 1; // Incremente le temps d'attente du passager
+
+                // Compare le temps d'attente de chaque passager avec son temps d'attente maximale
+                if(chain_passenger->data->wait_time_past == chain_passenger->data->wait_time_maximum)
                 {
-                    printf("Le passager %d a depasse son temps d'attente\n", arg[i]->head->data->identification_number);
-                    if((fd =open(myfifo, O_WRONLY)) == -1)
-                    {
-                        printf("Erreur d'ouverture du pipe nomme\n");
-                    }
-                    else
-                    {
-                        write(fd,arg[i]->head, sizeof(arg[i]->head));
-                        printf("verificateur : transfert du passager %d vers le taxi \n",arg[i]->head->data->identification_number );
-                        close(fd);
+                    if((fd = open(myfifo, O_WRONLY)) == -1)
+                    { // Ouverture du pipe nomme
+                        fprintf(stderr, "Erreur main.c : Impossible d'ouvrir l'entree du tube nomme.\n");
+                        exit(EXIT_FAILURE);
                     }
 
+                    passenger_check = remove_chain(table_passenger[index], &chain_passenger); // Recuperation du passager
+                    /*
+                     * Transferer le passager de la queue autobus/metro vers le tube nomme memorisant les passagers en
+                     * attente de taxis.
+                     */
+                    write(fd, &passenger_check, sizeof(passenger));
+
+                    // A COMPLETER ************************************************************************************
+
+                    printf("verificateur : transfert du passager %u vers le taxi",
+                           passenger_check->identification_number);
+
+                    close(fd); // Fermeture du pipe nomme
                 }
-                arg[i]->head = arg[i]->head->next;
-
+                else
+                {
+                    chain_passenger = chain_passenger->next;
+                }
             }
-
         }
     }
 }
@@ -321,10 +335,8 @@ int main(int argc, char* argv[])
  ***********************************************************************************************************************
  */
 
-    pthread_t id_thread_bus;
-    pthread_t id_thread_subway;
-    pthread_t id_thread_check;
-    arrived_passenger = new_queue(); //
+    pthread_t pthread_id[3];
+    arrived_passenger = new_queue();
 
     if(fork())
     {
@@ -382,6 +394,8 @@ int main(int argc, char* argv[])
     { // Supprimer des files FIFO
         delete_queue(table_passenger[index]);
     }
+
+    delete_queue(arrived_passenger);
 
     free(table_passenger);
 
