@@ -22,7 +22,7 @@ passenger *read_passenger(FILE *file)
     }
 
     // Lecture des differents parametres du passager
-    fscanf(file, "#%u %hhu %hhu %u %hhu %u\n",
+    fscanf(file, "# %u %hhu %hhu %u %hhu %u\n",
            &passenger1->identification_number,
            &passenger1->station_start,
            &passenger1->station_end,
@@ -251,8 +251,6 @@ void *thread_check(queue** table_passenger)
     int fd, index;
     chain *chain_passenger;
     passenger *passenger_check;
-
-    sleep(1); // Donne le temps aux threads bus et metro de poser le mutex.
 
     while(number_passenger > 0)
     {
