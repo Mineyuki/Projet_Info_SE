@@ -116,6 +116,7 @@ void *thread_bus(queue **table_passenger)
                 // Transfere le passager vers la queue des stations 0 a 5
                 passenger_bus = remove_chain(bus_passenger_list, &chain_bus);
                 push(table_passenger[MAX_STATION_BUS], passenger_bus);
+                profit = profit + 1; // Debourse 1$
             }
             else
             { // Dans les autres cas, on passe au passager suivant
@@ -204,6 +205,7 @@ void *thread_subway(queue **table_passenger)
                 // Tranfere le passager vers la queue des stations 5 a 0
                 passenger_subway = remove_chain(subway_passenger_list, &chain_subway);
                 push(table_passenger[0], passenger_subway);
+                profit = profit + 1; // Debourse 1$
             }
             else
             { // Dans les autres cas, on passe au passager suivant
