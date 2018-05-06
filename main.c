@@ -1,7 +1,12 @@
 #include "processus.h"
+#include "queue.h"
 
 uint32_t number_passenger; // Nombre de passager
 queue *arrived_passenger; // Passager arrive
+
+pthread_mutex_t mutex_bus = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_subway = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_taxi = PTHREAD_MUTEX_INITIALIZER;
 
 /*
  * Lit un passager dans le fichier passe en parametre et retourne ce passager
@@ -81,6 +86,7 @@ void *thread_bus(queue **table_passenger)
 
     while(number_passenger > 0)
     {
+        pthread_mutex_lock(&mutex_bus);
         // Incremente un compteur de station
         count_station = count_station + 1;
         if(count_station == MAX_STATION_BUS)
@@ -136,6 +142,7 @@ void *thread_bus(queue **table_passenger)
          * du thread autobus s'execute en concurrence avec un cycle du thread metro. Ces deux cycles sont toujours
          * suivis d'un cycle du thread verificateur
          */
+        pthread_mutex_unlock(&mutex_bus);
     }
 
     delete_queue(bus_passenger_list);
@@ -151,10 +158,11 @@ void *thread_subway(queue **table_passenger)
     _Bool increment = true; // Test pour verifier si on incremente le compteur ou decremente
     chain *chain_subway;
     passenger *passenger_subway;
-    queue *subway_passenger_list = new_queue(); // Liste des
+    queue *subway_passenger_list = new_queue(); // Liste des passagers
 
     while(number_passenger > 0)
     {
+        pthread_mutex_lock(&mutex_subway);
         if(increment)
         { // Incremente un compteur de station dans la direction originel
             count_station += 1;
@@ -221,6 +229,7 @@ void *thread_subway(queue **table_passenger)
          * du thread autobus s'execute en concurrence avec un cycle du thread metro. Ces deux cycles sont toujours
          * suivis d'un cycle du thread verificateur
          */
+        pthread_mutex_unlock(&mutex_subway);
     }
 
     delete_queue(subway_passenger_list);
@@ -237,8 +246,13 @@ void *thread_check(queue** table_passenger)
     chain *chain_passenger;
     passenger *passenger_check;
 
+    sleep(1); // Donne le temps aux threads bus et metro de poser le mutex.
+
     while(number_passenger > 0)
     {
+        pthread_mutex_lock(&mutex_bus);
+        pthread_mutex_lock(&mutex_subway);
+
         for(index = 0; index < MAX_STATION; index++)
         { // Parcours toutes les stations
             chain_passenger = table_passenger[index]->head; // On recupere la tete de la file d'attente de passager
@@ -263,8 +277,6 @@ void *thread_check(queue** table_passenger)
                      */
                     write(fd, &passenger_check, sizeof(passenger));
 
-                    // A COMPLETER ************************************************************************************
-
                     printf("verificateur : transfert du passager %u vers le taxi",
                            passenger_check->identification_number);
 
@@ -276,12 +288,53 @@ void *thread_check(queue** table_passenger)
                 }
             }
         }
+
+        pthread_mutex_unlock(&mutex_bus);
+        pthread_mutex_unlock(&mutex_subway);
     }
+
+    pthread_exit(NULL);
+}
+
+/*
+ * Fonction pour le thread du taxi
+ */
+void *thread_taxi(void *args)
+{
+    int fd;
+    char *myfifo = "communication.fifo";
+    passenger *passenger_taxi;
+
+    while(number_passenger > 0)
+    {
+        pthread_mutex_lock(&mutex_taxi); // Evite que tous les taxi se jette sur le meme passager
+
+        if((fd = open(myfifo, O_RDONLY)) == -1)
+        { // Ouverture du pipe nomme
+            fprintf(stderr, "Impossible d'ouvrir l'entree du tube nomme.\n");
+            exit(EXIT_FAILURE);
+        }
+
+        read(fd, &passenger_taxi, sizeof(int32_t)); // Recuperer les demandes du pipe (lecture bloquante)
+        close(fd); // Fermeture du pipe
+
+        pthread_mutex_unlock(&mutex_taxi);
+
+        usleep(10); // Simule l'action de reconduire un passager
+        printf("taxi#%d : passager %u est rendu a la station %hhu\n",
+               pthread_self(),
+               passenger_taxi->identification_number,
+               passenger_taxi->station_end);
+        push(arrived_passenger, passenger_taxi); // Passager arrive
+        number_passenger -= 1;
+    }
+
+    pthread_exit(NULL);
 }
 
 int main(int argc, char* argv[])
 {
-
+    int index;
 /*
  ***********************************************************************************************************************
  * Lecture et repartition des passagers dans les files d'attente des stations
@@ -299,7 +352,7 @@ int main(int argc, char* argv[])
     queue **table_passenger = malloc(MAX_STATION * sizeof(queue));
     passenger *passenger1;
 
-    for(int index = 0; index < MAX_STATION; index++)
+    for(index = 0; index < MAX_STATION; index++)
     { // Creation des files FIFO
         table_passenger[index] = new_queue();
     }
@@ -339,12 +392,7 @@ int main(int argc, char* argv[])
     arrived_passenger = new_queue();
 
     if(fork())
-    {
-/*
- * *********************************************************************************************************************
- * Creation des threads
- * *********************************************************************************************************************
- */
+    { // Creation des threads
         if(pthread_create(pthread_id+0, NULL, thread_bus, table_passenger) == -1)
         { // Creation du thread autobus
             fprintf(stderr, "Impossible de creer le thread bus");
@@ -366,20 +414,35 @@ int main(int argc, char* argv[])
 
         close(fd);
 
-        for(int index = 0; index < 3; index++)
-        {
+        for(index = 0; index < 3; index++)
+        { // Attente de la fin de chaque taxi
             pthread_join(pthread_id[index], NULL);
         }
     }
     else
     {
-        if((fd = open(myfifo, O_RDONLY)) == -1)
+        pthread_t *pthread_id_taxi = malloc(MAX_TAXI * sizeof(pthread_t));
+        if(pthread_id_taxi == NULL)
         {
-            fprintf(stderr, "Impossible d'ouvrir l'entree du tube nomme.\n");
+            fprintf(stderr, "Erreur main.c : erreur lors de l'allocation memoire taxi\n");
             exit(EXIT_FAILURE);
         }
 
-        close(fd);
+        for(index = 0; index < MAX_TAXI; index++)
+        { // Creation de tous les taxis
+            if(pthread_create(pthread_id+index, NULL, thread_taxi, NULL) == -1)
+            { // Creation du thread taxi
+                fprintf(stderr, "Impossible de creer le thread taxi\n");
+                exit(EXIT_FAILURE);
+            }
+        }
+
+        for(index = 0; index < MAX_TAXI; index++)
+        { // Attente de la fin de chaque taxi
+            pthread_join(pthread_id[index], NULL);
+        }
+
+        free(pthread_id_taxi);
     }
 
 /*
@@ -390,7 +453,7 @@ int main(int argc, char* argv[])
 
     unlink(myfifo);
 
-    for(int index = 0; index < MAX_STATION; index++)
+    for(index = 0; index < MAX_STATION; index++)
     { // Supprimer des files FIFO
         delete_queue(table_passenger[index]);
     }
