@@ -1,6 +1,7 @@
 #include "processus.h"
 #include "queue.h"
 
+uint32_t profit = 0;
 uint32_t number_passenger; // Nombre de passager
 queue *arrived_passenger; // Passager arrive
 
@@ -134,6 +135,7 @@ void *thread_bus(queue **table_passenger)
                 passenger_bus = pop(table_passenger[count_station]); // Recupere un passager de la file d'attente
                 push(bus_passenger_list, passenger_bus); // Rajoute le passager dans la liste du bus
                 printf("[bus] : [embarque] le passager %u\n", passenger_bus->identification_number);
+                profit = profit + 1; // Debourse 1$
             }
         }
 
@@ -221,6 +223,7 @@ void *thread_subway(queue **table_passenger)
                 passenger_subway = pop(table_passenger[count_station]); // Recupere un passager de la file d'attente
                 push(subway_passenger_list, passenger_subway); // Rajoute le passager dans la liste du metro
                 printf("[metro] : [embarque] le passager %u\n", passenger_subway->identification_number);
+                profit = profit + 1; // Debourse 1$
             }
         }
 
@@ -325,6 +328,7 @@ void *thread_taxi(void *args)
                pthread_self(),
                passenger_taxi->identification_number,
                passenger_taxi->station_end);
+        profit = profit + 3; // Debourse 1$
         push(arrived_passenger, passenger_taxi); // Passager arrive
         number_passenger -= 1;
     }
@@ -443,6 +447,8 @@ int main(int argc, char* argv[])
         }
 
         free(pthread_id_taxi);
+
+        printf("Profit de la journee : %u $\n", profit);
     }
 
 /*
