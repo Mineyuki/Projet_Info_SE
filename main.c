@@ -1,5 +1,5 @@
 #include "processus.h"
-#include "queue.h" // Librairie personnelle : file FIFO de type passenger
+#include "queue.h"
 
 /*
  * Variable globale
@@ -7,10 +7,7 @@
 queue * metro_passenger;
 queue * bus_passenger;
 
-pthread_t thread1;
-pthread_t thread2;
-pthread_t thread3;
-
+uint32_t number_passenger; // Nombre de passager
 
 /*
  * Lit un passager dans le fichier passe en parametre et retourne ce passager
@@ -36,52 +33,123 @@ passenger *read_passenger(FILE *file)
 
     return passenger1; // Renvoie le passager
 }
+
+/*
+ * Supprime un maillon d'une liste de passager
+ * Retourne le passager et le maillon suivant
+ */
+passenger *remove_chain(queue *queue1, chain **chain_remove)
+{
+    chain *chain_temp;
+    passenger *passenger1;
+
+    if((*chain_remove) == NULL)
+    { // Erreur : on demande a supprimer dans une chaine inexistante
+        fprintf(stderr, "Erreur main.c : Impossible de supprimer le passager inexistant\n");
+        exit(EXIT_FAILURE);
+    }
+    else if ((*chain_remove) == queue1->head)
+    { // Si le maillon est en tete
+        passenger1 = pop(queue1); // Retourne la tete de la liste
+
+        (*chain_remove) = queue1->head; // Recupere la tete de la liste
+
+        return passenger1;
+    }
+    else
+    { // Sinon
+        chain_temp = (*chain_remove)->next; // Recupere le maillon suivant du maillon a supprimer
+        passenger1 = (*chain_remove)->data; // Recupere le passager
+
+        if(queue1->tail == (*chain_remove))
+        { // Si le maillon a supprimer est a la queue de la liste
+            queue1->tail = chain_temp; // La nouvelle queue devient le maillon
+        }
+
+        free((*chain_remove)); // Supprime le maillon a supprimer
+
+        queue1->size -= 1; // Reduit la taille de la liste
+        (*chain_remove) = chain_temp;
+
+        return passenger1; // Retourne le maillon suivant
+    }
+}
+
 /*
  * Fonction thread pour autobus
  */
-
-void * thread_autobus(queue ** arg)
+void *thread_bus(queue **table_passenger)
 {
-    bus_passenger = new_queue();
-    uint32_t compteur_station = 0;
+    bus_passenger = new_queue(); // Creation d'une liste de passager
+    uint32_t count_station = 0; // Compteur de la station
+    chain *chain_bus;
+    passenger *passenger_bus;
 
-
-    while(1)
+    while(number_passenger > 0)
     {
-        while(arg !=NULL)
-        {
-            if(bus_passenger->size > MAX_CAPACITY_BUS) // Test si la capacité du bus est atteinte
-                printf("Capacite maximale atteinte");
-            else
-                push(bus_passenger, bus_passenger->head->data); //Rajoute le voyageur dans la file du bus
-
-            printf("[Bus] transfert du passager %d, vers %d", bus_passenger->head->data->identification_number, bus_passenger->head->data->station_end);
-            while(bus_passenger->head->next != NULL)
-            {
-                if (bus_passenger->head->data->station_end == compteur_station)
-                {
-                    printf("[Bus] debarque le passager %d", arg[compteur_station]->head->data->identification_number);
-                    pop(bus_passenger);
-                }
-                bus_passenger->head = bus_passenger->head->next;
-            }
-            arg[compteur_station]->head = arg[compteur_station]->head->next;
+        // Incremente un compteur de station
+        count_station = count_station + 1;
+        if(count_station == MAX_STATION_BUS)
+        { // Si on atteint le maximum de station, on remet le compteur a 0
+            count_station = 0;
         }
-        compteur_station = compteur_station + 1;
+
+        chain_bus = bus_passenger->head; // On recupere la tete de la liste de passager du bus
+
+        while(chain_bus != NULL)
+        { // Parcours de la liste de passager du bus
+
+            if (chain_bus->data->station_end == count_station)
+            { // Verifier dans la liste de passager du bus si un passager est arrive a destination
+                printf("[bus] : [debarque] le passager %u", chain_bus->data->identification_number);
+
+                // Il assure le debarquement du passager en question en ajustant sa liste de passagers
+                passenger_bus = remove_chain(bus_passenger, &chain_bus);
+                free(passenger_bus);
+            }
+            else if((count_station == 0) && (chain_bus->data->transfert == 1))
+            { // Verifie le transfert des passagers vers la queue de la station de metro
+                printf("[bus] : transfert passager %u vers station %u",
+                       chain_bus->data->identification_number,
+                       MAX_STATION_BUS);
+                // Transfere le passager vers la queue des stations 0 a 5
+                passenger_bus = remove_chain(bus_passenger, &chain_bus);
+                push(table_passenger[MAX_STATION_BUS], passenger_bus);
+            }
+            else
+            { // Dans les autres cas, on passe au passager suivant
+                chain_bus = chain_bus->next;
+            }
+        }
+
+        /*
+         * Faire l'embarquement des nouveaux passagers en examinant la queue qui correspond au compteur de station
+         * Attention a la capacite maximale du vehicule
+         */
+        while(bus_passenger->size < MAX_CAPACITY_BUS)
+        { // Test si la capacité du bus est atteinte
+            passenger_bus = pop(table_passenger[count_station]); // Recupere un passager de la file d'attente
+            push(bus_passenger, passenger_bus); // Rajoute le passager dans la liste du bus
+        }
+
+        /*
+         * Donner le controle au verificateur une fois l'execution termine via un rendez-vous bilateral. Chaque cycle
+         * du thread autobus s'execute en concurrence avec un cycle du thread metro. Ces deux cycles sont toujours
+         * suivis d'un cycle du thread verificateur
+         */
     }
 }
 
 /*
  * Fonction thread pour metro
  */
-
-void * thread_metro(queue **arg)
+void *thread_subway(queue **arg)
 {
     uint32_t compteur_station = 5;
     metro_passenger = new_queue();
 
 
-    while(1)
+    while(number_passenger > 0)
     {
         if(compteur_station > 8)
         {
@@ -117,11 +185,11 @@ void * thread_metro(queue **arg)
  * Fonction pour le thread verificateur
  */
 
-void * thread_verificateur(queue** arg)
+void *thread_check(queue** arg)
 {
     char * myfifo = "communication.fifo";
     int fd;
-    while(1)
+    while(number_passenger > 0)
     {
         for (int i = 0 ; i < MAX_STATION ; i ++)
         {
@@ -160,11 +228,7 @@ int main(int argc, char* argv[])
  * Lecture et repartition des passagers dans les files d'attente des stations
  ***********************************************************************************************************************
  */
-    pid_t taxi;
-
-
     // Creation de la file pour metro et bus
-
     FILE *file = fopen(argv[1], "rt"); // On recupere le fichier passe en parametre
     if(file == NULL)
     {
@@ -173,33 +237,20 @@ int main(int argc, char* argv[])
     }
 
     // Tableau de file d'attente
-    queue **increment_table_passenger = malloc(MAX_STATION * sizeof(queue));
-    // Tableau de file d'attente du sens contraire horaire du metro
-    queue **decrement_table_passenger = malloc(MAX_STATION * sizeof(queue));
+    queue **table_passenger = malloc(MAX_STATION * sizeof(queue));
     passenger *passenger1;
 
     for(int index = 0; index < MAX_STATION; index++)
     { // Creation des files FIFO
-        increment_table_passenger[index] = new_queue();
-        if(index >= MAX_STATION_BUS)
-        { // Tableau de files d'attente pour le metro
-            decrement_table_passenger[index] = new_queue();
-        }
+        table_passenger[index] = new_queue();
     }
+
+    fscanf(file, "%u", &number_passenger); // Recupere le nombre de passager total
 
     while(!feof(file))
     { // Tant que l'on n'a pas atteint la fin du fichier
         passenger1 = read_passenger(file); // Recupere un passager
-
-        if(passenger1->station_start > passenger1->station_end
-           && passenger1->station_start >= MAX_STATION_BUS)
-        { // Ajoute a la file d'attente du sens contraire horaire du metro
-            push(decrement_table_passenger[passenger1->station_start], passenger1);
-        }
-        else
-        { // Ajoute a la file d'attente
-            push(increment_table_passenger[passenger1->station_start], passenger1);
-        }
+        push(table_passenger[passenger1->station_start], passenger1); // Ajoute a la file d'attente
     }
 
     fclose(file); // Fermeture du fichier
@@ -225,7 +276,11 @@ int main(int argc, char* argv[])
  ***********************************************************************************************************************
  */
 
-    if((taxi = fork()) == 0)
+    pthread_t id_thread_bus;
+    pthread_t id_thread_subway;
+    pthread_t id_thread_check;
+
+    if(fork())
     {
         if((fd = open(myfifo, O_WRONLY)) == -1)
         {
@@ -233,7 +288,32 @@ int main(int argc, char* argv[])
             exit(EXIT_FAILURE);
         }
 
+/*
+ * *********************************************************************************************************************
+ * Creation des threads
+ * *********************************************************************************************************************
+ */
+        if(pthread_create(&id_thread_bus, NULL, thread_bus, table_passenger) == -1)
+        { // Creation du thread autobus
+            fprintf(stderr, "Impossible de creer le thread bus");
+            exit(EXIT_FAILURE);
+
+        }
+
+        if(pthread_create(&id_thread_subway, NULL, thread_subway, table_passenger) == -1)
+        { // Creation du thread metro
+            fprintf(stderr, "Impossible de creer le thread metro");
+            exit(EXIT_FAILURE);
+        }
+
+        if(pthread_create(&id_thread_check, NULL, thread_check, table_passenger) == -1)
+        { // Creation du thread verificateur
+            fprintf(stderr, "Impossible de creer le thread verificateur");
+            exit(EXIT_FAILURE);
+        }
+
         close(fd);
+        pthread_exit(NULL); // Attend la fin des autres threads
     }
     else
     {
@@ -247,35 +327,6 @@ int main(int argc, char* argv[])
     }
 
 /*
- * *********************************************************************************************************************
- * Creation des threads
- * *********************************************************************************************************************
- */
-    if( pthread_create(&thread1, NULL, thread_autobus, increment_table_passenger ) == -1)
-    {
-        fprintf(stderr, "Impossible de creer le thread bus");
-        exit(EXIT_FAILURE);
-
-    }
-
-    if(pthread_create(&thread2, NULL, thread_metro, increment_table_passenger)== -1)
-    {
-        fprintf(stderr, "Impossible de creer le thread metro");
-        exit(EXIT_FAILURE);
-    }
-
-    if ( pthread_create(&thread3, NULL, thread_verificateur, increment_table_passenger) == -1)
-    {
-        fprintf(stderr, "Impossible de creer le thread verificateur");
-        exit(EXIT_FAILURE);
-    }
-
-    pthread_join(thread1, NULL);
-    pthread_join(thread2, NULL);
-    pthread_join(thread3, NULL);
-
-
-/*
  ***********************************************************************************************************************
  * Liberation de la memoire
  ***********************************************************************************************************************
@@ -285,16 +336,10 @@ int main(int argc, char* argv[])
 
     for(int index = 0; index < MAX_STATION; index++)
     { // Supprimer des files FIFO
-        delete_queue(increment_table_passenger[index]);
-        if(index >= MAX_STATION_BUS)
-        { // Tableau de files d'attente pour le metro
-            delete_queue(decrement_table_passenger[index]);
-        }
+        delete_queue(table_passenger[index]);
     }
 
-    free(increment_table_passenger);
-    free(decrement_table_passenger);
-
+    free(table_passenger);
 
     return EXIT_SUCCESS;
 }

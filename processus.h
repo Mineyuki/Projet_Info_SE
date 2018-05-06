@@ -10,6 +10,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <pthread.h>
+#include "queue.h" // Librairie personnelle : file FIFO de type passenger
 
 
 #define MAX_STATION 8 // Nombre de station
@@ -34,5 +35,7 @@ typedef struct
 }passenger;
 
 passenger *read_passenger(FILE*); // Lit un passager dans le fichier passe en parametre et retourne ce passager
+passenger *remove_chain(queue *, chain **); // Supprime un maillon d'une liste de passager et retourne le passager et le maillon suivant
+void *thread_bus(queue**); // Thread du bus
 
 #endif
