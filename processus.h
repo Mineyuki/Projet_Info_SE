@@ -17,6 +17,7 @@
 #define MAX_CAPACITY_SUBWAY 8 // Capacite maximale d'un train
 
 passenger *read_passenger(FILE *); // Lit un passager dans le fichier passe en parametre et retourne ce passager
+passenger *change_chain(queue *, chain **); // Fonction recuperant le passager du maillon et changeant le maillon actuel par le suivant
 void *thread_bus(queue **); // Thread du bus
 void *thread_subway(queue **); // Thread du metro
 void *thread_check(queue **); // Thread verificateur
