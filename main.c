@@ -89,9 +89,10 @@ void *thread_bus(queue **table_passenger)
 
                 // Transfere le passager vers la queue des stations 0 a 5
                 passenger_bus = remove_chain(bus_passenger_list, passenger_position);
-                push(table_passenger[MAX_STATION_BUS], passenger_bus); // Ajoute a la liste d'attente du metro
 
                 profit = profit + 1; // Debourse 1$
+
+                push(table_passenger[MAX_STATION_BUS], passenger_bus); // Ajoute a la liste d'attente du metro
             }
             else
             { // Dans les autres cas, on passe au passager suivant
@@ -108,10 +109,12 @@ void *thread_bus(queue **table_passenger)
             if(table_passenger[count_station]->size > 0)
             { // Si il y a des passagers dans la file d'attente
                 passenger_bus = pop(table_passenger[count_station]); // Recupere un passager de la file d'attente
+
+                profit = profit + 1; // Debourse 1$
+
                 push(bus_passenger_list, passenger_bus); // Rajoute le passager dans la liste du bus
 
                 printf("[bus] : [embarque] le passager %u\n", passenger_bus->identification_number);
-                profit = profit + 1; // Debourse 1$
             }
             else
             {
@@ -194,9 +197,9 @@ void *thread_subway(queue **table_passenger)
                 // Tranfere le passager vers la queue des stations 5 a 0
                 passenger_subway = remove_chain(subway_passenger_list, passenger_position);
 
-                push(table_passenger[0], passenger_subway); // Ajoute a la liste d'attente du bus
-
                 profit = profit + 1; // Debourse 1$
+
+                push(table_passenger[0], passenger_subway); // Ajoute a la liste d'attente du bus
             }
             else
             { // Dans les autres cas, on passe au passager suivant
@@ -213,10 +216,12 @@ void *thread_subway(queue **table_passenger)
             if(table_passenger[count_station]->size > 0)
             { // Si il y a des passagers dans la file d'attente
                 passenger_subway = pop(table_passenger[count_station]); // Recupere un passager de la file d'attente
+
+                profit = profit + 1; // Debourse 1$
+
                 push(subway_passenger_list, passenger_subway); // Rajoute le passager dans la liste du metro
 
                 printf("[metro] : [embarque] le passager %u\n", passenger_subway->identification_number);
-                profit = profit + 1; // Debourse 1$
             }
             else
             {
@@ -273,6 +278,9 @@ void *thread_check(queue** table_passenger)
                     passenger_position = find_passenger_position(table_passenger[index], chain_passenger);
                     chain_passenger = chain_passenger->next;
                     passenger_check = remove_chain(table_passenger[index], passenger_position); // Recuperation du passager
+
+                    profit = profit + 3; // Debourse 3$
+
                     /*
                      * Transferer le passager de la queue autobus/metro vers le tube nomme memorisant les passagers en
                      * attente de taxis.
@@ -282,7 +290,6 @@ void *thread_check(queue** table_passenger)
                     printf("verificateur : transfert du passager %u vers le taxi\n",
                            passenger_check->identification_number);
 
-                    profit = profit + 3; // Debourse 3$
                     number_passenger = number_passenger - 1; // Decremente d'un passager
                 }
                 else
@@ -305,7 +312,7 @@ void *thread_check(queue** table_passenger)
  */
 void *thread_taxi(void *args)
 {
-    int fd;
+    int32_t fd;
     char *myfifo = "communication.fifo";
     passenger *passenger_taxi;
 
@@ -317,7 +324,10 @@ void *thread_taxi(void *args)
 
     while(number_passenger > 0)
     {
-        read(fd, &passenger_taxi, sizeof(passenger)); // Recuperer les demandes du pipe (lecture bloquante)
+        if(read(fd, &passenger_taxi, sizeof(passenger)) <= 0)
+        { // Recuperer les demandes du pipe (lecture bloquante)
+            break;
+        }
 
         usleep(10); // Simule l'action de reconduire un passager
 
@@ -422,6 +432,8 @@ int main(int argc, char* argv[])
         { // Attente de la fin de chaque taxi
             pthread_join(pthread_id[index], NULL);
         }
+
+        printf("Profit de la journee : %u $\n", profit);
     }
     else
     {
@@ -468,8 +480,6 @@ int main(int argc, char* argv[])
     }
 
     free(table_passenger);
-
-    printf("Profit de la journee : %u $\n", profit);
 
     return EXIT_SUCCESS;
 }
