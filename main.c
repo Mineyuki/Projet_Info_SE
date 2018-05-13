@@ -70,11 +70,9 @@ void *thread_bus(queue **table_passenger)
             { // Verifier dans la liste de passager du bus si un passager est arrive a destination
                 printf("[bus] : [debarque] le passager %u\n", chain_bus->data->identification_number);
 
-                passenger_position = find_passenger_position(bus_passenger_list, chain_bus);
-                chain_bus = chain_bus->next;
                 // Il assure le debarquement du passager en question en ajustant sa liste de passagers
-                passenger_bus = remove_chain(bus_passenger_list, passenger_position);
-                free(passenger_bus);
+                passenger_bus = change_chain(bus_passenger_list, &chain_bus);
+                free(passenger_bus); // Libere la memoire du passager debarque
 
                 number_passenger = number_passenger - 1; // Decremente d'un passager
             }
@@ -84,11 +82,8 @@ void *thread_bus(queue **table_passenger)
                        chain_bus->data->identification_number,
                        MAX_STATION_BUS);
 
-                passenger_position = find_passenger_position(bus_passenger_list, chain_bus);
-                chain_bus = chain_bus->next;
-
                 // Transfere le passager vers la queue des stations 0 a 5
-                passenger_bus = remove_chain(bus_passenger_list, passenger_position);
+                passenger_bus = change_chain(bus_passenger_list, &chain_bus);
 
                 profit = profit + 1; // Debourse 1$
 
@@ -178,11 +173,9 @@ void *thread_subway(queue **table_passenger)
             { // Verifier dans la liste de passager du bus si un passager est arrive a destination
                 printf("[metro] : [debarque] le passager %u\n", chain_subway->data->identification_number);
 
-                passenger_position = find_passenger_position(subway_passenger_list, chain_subway);
-                chain_subway = chain_subway->next;
                 // Il assure le debarquement du passager en question en ajustant sa liste des passagers
-                passenger_subway = remove_chain(subway_passenger_list, passenger_position);
-                free(passenger_subway);
+                passenger_subway = change_chain(subway_passenger_list, &chain_subway);
+                free(passenger_subway); // Libere la memoire d'un passager
 
                 number_passenger = number_passenger - 1; // Decremente d'un passager
             }
@@ -192,10 +185,8 @@ void *thread_subway(queue **table_passenger)
                        chain_subway->data->identification_number,
                        0);
 
-                passenger_position = find_passenger_position(subway_passenger_list, chain_subway);
-                chain_subway = chain_subway->next;
                 // Tranfere le passager vers la queue des stations 5 a 0
-                passenger_subway = remove_chain(subway_passenger_list, passenger_position);
+                passenger_subway = change_chain(subway_passenger_list, &chain_subway);
 
                 profit = profit + 1; // Debourse 1$
 
@@ -275,9 +266,7 @@ void *thread_check(queue** table_passenger)
                 // Compare le temps d'attente de chaque passager avec son temps d'attente maximale
                 if(chain_passenger->data->wait_time_past == chain_passenger->data->wait_time_maximum)
                 {
-                    passenger_position = find_passenger_position(table_passenger[index], chain_passenger);
-                    chain_passenger = chain_passenger->next;
-                    passenger_check = remove_chain(table_passenger[index], passenger_position); // Recuperation du passager
+                    passenger_check = change_chain(table_passenger[index], &chain_passenger);
 
                     profit = profit + 3; // Debourse 3$
 
@@ -325,7 +314,11 @@ void *thread_taxi(void *args)
     while(number_passenger > 0)
     {
         if(read(fd, &passenger_taxi, sizeof(passenger)) <= 0)
-        { // Recuperer les demandes du pipe (lecture bloquante)
+        {
+            /*
+             * Recuperer les demandes du pipe (lecture bloquante)
+             * Dans le cas de la fermeture de l'ecrivain, on arrete la boucle while
+             */
             break;
         }
 
