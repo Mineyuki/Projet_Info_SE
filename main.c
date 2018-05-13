@@ -20,7 +20,7 @@ passenger *read_passenger(FILE *file)
     }
 
     // Lecture des differents parametres du passager
-    fscanf(file, "# %u %hhu %hhu %u %hhu %u\n",
+    fscanf(file, "# %u %u %u %u %hhu %u\n",
            &passenger1->identification_number,
            &passenger1->station_start,
            &passenger1->station_end,
@@ -47,7 +47,6 @@ passenger *change_chain(queue *queue1, chain **return_chain)
  */
 void *thread_bus(queue **table_passenger)
 {
-    uint64_t passenger_position = 0; // Position du passager
     uint32_t count_station = 0; // Compteur de la station
     chain *chain_bus;
     passenger *passenger_bus;
@@ -135,7 +134,6 @@ void *thread_bus(queue **table_passenger)
  */
 void *thread_subway(queue **table_passenger)
 {
-    uint64_t passenger_position = 0; // Position du passager
     uint32_t count_station = MAX_STATION_BUS; // Compteur de la station
     _Bool increment = true; // Test pour verifier si on incremente le compteur ou decremente
     chain *chain_subway;
@@ -238,9 +236,8 @@ void *thread_subway(queue **table_passenger)
  */
 void *thread_check(queue** table_passenger)
 {
-    uint64_t passenger_position;
     char *myfifo = "communication.fifo";
-    int fd, index;
+    int32_t fd, index;
     chain *chain_passenger;
     passenger *passenger_check;
 
@@ -324,7 +321,7 @@ void *thread_taxi(void *args)
 
         usleep(10); // Simule l'action de reconduire un passager
 
-        printf("taxi#%d : passager %u est rendu a la station %hhu\n",
+        printf("taxi#%d : passager %u est rendu a la station %u\n",
                pthread_self(),
                passenger_taxi->identification_number,
                passenger_taxi->station_end);

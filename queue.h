@@ -12,8 +12,8 @@
 typedef struct
 {
     uint32_t identification_number; // Numero d'identification unique
-    uint8_t station_start; // Station de depart
-    uint8_t station_end; // Station d'arrivee
+    uint32_t station_start; // Station de depart
+    uint32_t station_end; // Station d'arrivee
     uint32_t wait_time_past; // Temps d'attente ecoule
     uint8_t transfert; // Transfert entre le circuit de metro et d'autobus est requis
     uint32_t wait_time_maximum; // Temps d'attente maximal
